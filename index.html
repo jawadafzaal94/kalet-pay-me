@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KĀLET — Secure Payment</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=EB+Garamond:wght@400;500&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --crimson-deep: #5A0B17;
+    --gold:         #D4A057;
+    --gold-light:   #E8C080;
+    --gold-pale:    #F5DFA8;
+    --gold-dim:     #A87A3A;
+    --cream:        #FDF6E8;
+    --border-gold:  rgba(212,160,87,0.35);
+  }
+
+  body {
+    font-family: 'EB Garamond', serif;
+    background-color: var(--crimson-deep);
+    background-image:
+      radial-gradient(ellipse at 25% 10%, rgba(180,30,50,0.55) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 90%, rgba(100,10,20,0.6) 0%, transparent 55%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    color: var(--gold-pale);
+  }
+
+  .container { width: 100%; max-width: 480px; }
+
+  /* ── Logo ── */
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 2rem;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .logo-svg { width: 300px; height: auto; }
+
+  /* ── Ornament separator ── */
+  .ornament {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 2rem; opacity: 0.45;
+    animation: fadeDown 0.7s 0.1s ease both;
+  }
+  .ornament-line { flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+  .ornament-diamond { width:6px; height:6px; background:var(--gold); transform:rotate(45deg); flex-shrink:0; }
+
+  /* ── Card ── */
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-gold);
+    border-radius: 4px;
+    padding: 2.5rem 2.25rem;
+    position: relative;
+    animation: fadeUp 0.7s 0.15s ease both;
+  }
+  .card::before, .card::after {
+    content:''; position:absolute;
+    width:20px; height:20px;
+    border-color:var(--gold-dim); border-style:solid; opacity:0.5;
+  }
+  .card::before { top:-1px; left:-1px; border-width:2px 0 0 2px; }
+  .card::after  { bottom:-1px; right:-1px; border-width:0 2px 2px 0; }
+
+  .card-title {
+    font-family:'Cinzel',serif; font-size:10px;
+    letter-spacing:0.25em; text-transform:uppercase;
+    color:var(--gold-dim); text-align:center; margin-bottom:2rem;
+  }
+
+  /* ── Fields ── */
+  .field { margin-bottom: 1.3rem; }
+  .field label {
+    display:block; font-family:'Cinzel',serif; font-size:10px;
+    letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--gold-dim); margin-bottom:7px;
+  }
+  .field input, .field select {
+    width:100%; height:46px; padding:0 14px;
+    font-family:'EB Garamond',serif; font-size:16px;
+    color:var(--cream); background:rgba(0,0,0,0.25);
+    border:1px solid var(--border-gold); border-radius:2px;
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+    appearance:none; -webkit-appearance:none;
+  }
+  .field input::placeholder { color:rgba(245,223,168,0.3); }
+  .field input:focus, .field select:focus {
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(212,160,87,0.12);
+    background:rgba(0,0,0,0.35);
+  }
+  .field select {
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A87A3A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 14px center;
+    padding-right:36px; cursor:pointer;
+  }
+  .field select option { background:#5A0B17; color:var(--cream); }
+  .field select optgroup { background:#3D0710; color:var(--gold-dim); }
+
+  .name-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+  /* ── Amount ── */
+  .amount-wrap {
+    display:flex; align-items:stretch;
+    background:rgba(0,0,0,0.25); border:1px solid var(--border-gold);
+    border-radius:2px; overflow:hidden;
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  .amount-wrap:focus-within { border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,160,87,0.12); }
+  .cur-badge {
+    padding:0 14px; background:rgba(212,160,87,0.1);
+    border-right:1px solid var(--border-gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel',serif; font-size:12px; letter-spacing:0.1em;
+    color:var(--gold); min-width:64px; white-space:nowrap;
+  }
+  .amount-wrap input {
+    border:none !important; box-shadow:none !important;
+    background:transparent !important; border-radius:0 !important;
+    flex:1; padding:0 14px;
+    font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:500;
+    color:var(--cream);
+  }
+
+  /* ── Divider ── */
+  .divider { display:flex; align-items:center; gap:10px; margin:1.75rem 0; opacity:0.35; }
+  .divider-line { flex:1; height:1px; background:var(--gold-dim); }
+  .divider-dot { width:4px; height:4px; background:var(--gold-dim); transform:rotate(45deg); }
+
+  /* ── Summary ── */
+  .summary {
+    background:rgba(212,160,87,0.07); border:1px solid rgba(212,160,87,0.18);
+    border-radius:2px; padding:14px 16px; margin-bottom:1.5rem; display:none;
+  }
+  .summary.show { display:block; }
+  .summary-row {
+    display:flex; justify-content:space-between;
+    font-size:14px; color:var(--gold-dim); margin-bottom:5px;
+  }
+  .summary-row span:last-child { color:var(--gold-pale); }
+  .summary-row.total {
+    margin-top:10px; padding-top:10px; border-top:1px solid rgba(212,160,87,0.18);
+    margin-bottom:0; font-family:'Cormorant Garamond',serif;
+    font-size:19px; font-weight:600; color:var(--gold);
+  }
+
+  /* ── Pay Button ── */
+  .pay-btn {
+    width:100%; height:52px;
+    background:linear-gradient(135deg, var(--gold-dim) 0%, var(--gold-light) 40%, var(--gold) 60%, var(--gold-dim) 100%);
+    background-size:200% 100%;
+    color:var(--crimson-deep); border:none; border-radius:2px;
+    font-family:'Cinzel',serif; font-size:12px; font-weight:600;
+    letter-spacing:0.22em; text-transform:uppercase; cursor:pointer;
+    transition:background-position 0.5s, transform 0.1s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .pay-btn:hover { background-position:100% 0; }
+  .pay-btn:active { transform:scale(0.99); }
+  .pay-btn svg { width:15px; height:15px; fill:var(--crimson-deep); }
+
+  /* ── Footer ── */
+  .footer { text-align:center; margin-top:2rem; animation:fadeUp 0.7s 0.25s ease both; }
+  .footer p { font-size:13px; color:rgba(245,223,168,0.35); line-height:1.7; font-style:italic; }
+  .wise-footer {
+    display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.12em;
+    color:var(--gold-dim); opacity:0.6;
+  }
+  .wise-footer strong { color:var(--gold); opacity:1; }
+
+  @keyframes fadeDown { from{opacity:0;transform:translateY(-14px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)}  to{opacity:1;transform:translateY(0)} }
+
+  @media(max-width:480px){
+    .card{padding:1.75rem 1.25rem;}
+    .name-row{grid-template-columns:1fr;}
+    .logo-svg{width:230px;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HD SVG Logo — wordmark + tagline only, no ornament -->
+  <div class="logo-wrap">
+    <svg class="logo-svg" viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gG" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stop-color="#F5DFA8"/>
+          <stop offset="35%"  stop-color="#E8C080"/>
+          <stop offset="65%"  stop-color="#D4A057"/>
+          <stop offset="100%" stop-color="#9A6D30"/>
+        </linearGradient>
+      </defs>
+
+      <!-- KĀLET wordmark -->
+      <text x="280" y="78"
+        font-family="Cinzel, serif"
+        font-size="90" font-weight="600"
+        letter-spacing="12" text-anchor="middle"
+        fill="url(#gG)">KĀLET</text>
+
+      <!-- TM -->
+      <text x="492" y="24"
+        font-family="Cinzel, serif" font-size="16"
+        fill="#D4A057" opacity="0.75">™</text>
+
+      <!-- Tagline -->
+      <text x="280" y="108"
+        font-family="Cormorant Garamond, serif" font-style="italic"
+        font-size="17" letter-spacing="3.5" text-anchor="middle"
+        fill="#D4A057" opacity="0.7">Modern Steps. Timeless Roots.</text>
+    </svg>
+  </div>
+
+  <!-- Thin gold separator -->
+  <div class="ornament">
+    <div class="ornament-line"></div>
+    <div class="ornament-diamond"></div>
+    <div class="ornament-line"></div>
+  </div>
+
+  <!-- Payment Form -->
+  <div class="card">
+    <p class="card-title">Secure Payment Portal</p>
+
+    <div class="field">
+      <label>Order Description</label>
+      <input type="text" id="desc" placeholder="e.g. Custom footwear, Product order…" />
+    </div>
+
+    <div class="field">
+      <label>Your Currency</label>
+      <select id="currency" onchange="onCurrencyChange()">
+        <option value="">— Select your currency —</option>
+        <optgroup label="Popular">
+          <option value="USD">🇺🇸 USD — US Dollar</option>
+          <option value="EUR">🇪🇺 EUR — Euro</option>
+          <option value="GBP">🇬🇧 GBP — British Pound</option>
+          <option value="PKR">🇵🇰 PKR — Pakistani Rupee</option>
+          <option value="MYR">🇲🇾 MYR — Malaysian Ringgit</option>
+        </optgroup>
+        <optgroup label="Middle East &amp; Asia">
+          <option value="AED">🇦🇪 AED — UAE Dirham</option>
+          <option value="SAR">🇸🇦 SAR — Saudi Riyal</option>
+          <option value="QAR">🇶🇦 QAR — Qatari Riyal</option>
+          <option value="KWD">🇰🇼 KWD — Kuwaiti Dinar</option>
+          <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
+          <option value="INR">🇮🇳 INR — Indian Rupee</option>
+          <option value="BDT">🇧🇩 BDT — Bangladeshi Taka</option>
+        </optgroup>
+        <optgroup label="Americas &amp; Oceania">
+          <option value="CAD">🇨🇦 CAD — Canadian Dollar</option>
+          <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
+          <option value="NZD">🇳🇿 NZD — New Zealand Dollar</option>
+        </optgroup>
+        <optgroup label="Europe">
+          <option value="CHF">🇨🇭 CHF — Swiss Franc</option>
+          <option value="SEK">🇸🇪 SEK — Swedish Krona</option>
+          <option value="NOK">🇳🇴 NOK — Norwegian Krone</option>
+          <option value="PLN">🇵🇱 PLN — Polish Zloty</option>
+          <option value="TRY">🇹🇷 TRY — Turkish Lira</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Amount</label>
+      <div class="amount-wrap">
+        <div class="cur-badge" id="curBadge">—</div>
+        <input type="number" id="amount" placeholder="0.00" min="0.01" step="0.01" oninput="updateSummary()" />
+      </div>
+    </div>
+
+    <div class="name-row">
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" id="fname" placeholder="First name" />
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input type="text" id="lname" placeholder="Last name" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" />
+    </div>
+
+    <div class="divider">
+      <div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div>
+    </div>
+
+    <div class="summary" id="summary">
+      <div class="summary-row"><span>Description</span><span id="s-desc">—</span></div>
+      <div class="summary-row"><span>Currency</span><span id="s-cur">—</span></div>
+      <div class="summary-row total"><span>Total</span><span id="s-amt">—</span></div>
+    </div>
+
+    <button class="pay-btn" onclick="handlePay()">
+      <svg viewBox="0 0 24 24"><path d="M13.5 2L4 13h7l-1.5 9L20 11h-7z"/></svg>
+      Complete Payment via Wise
+    </button>
+  </div>
+
+  <div class="footer">
+    <p>You will be redirected to Wise to complete your payment securely.<br/>No Wise account required — card &amp; bank transfer accepted.</p>
+    <div class="wise-footer">Secured by <strong>⚡ Wise</strong></div>
+  </div>
+</div>
+
+<script>
+const symbols={PKR:'PKR',MYR:'RM',USD:'$',EUR:'€',GBP:'£',AED:'AED',SAR:'SAR',QAR:'QAR',KWD:'KWD',SGD:'S$',INR:'₹',BDT:'৳',CAD:'CA$',AUD:'A$',NZD:'NZ$',CHF:'CHF',SEK:'kr',NOK:'kr',PLN:'zł',TRY:'₺'};
+
+function onCurrencyChange(){
+  const c=document.getElementById('currency').value;
+  document.getElementById('curBadge').textContent=c?(symbols[c]||c):'—';
+  updateSummary();
+}
+
+function updateSummary(){
+  const c=document.getElementById('currency').value;
+  const a=parseFloat(document.getElementById('amount').value);
+  const d=document.getElementById('desc').value.trim();
+  const b=document.getElementById('summary');
+  if(c&&a>0){
+    b.classList.add('show');
+    document.getElementById('s-desc').textContent=d||'Order Payment';
+    document.getElementById('s-cur').textContent=c;
+    document.getElementById('s-amt').textContent=(symbols[c]||c+' ')+a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  } else { b.classList.remove('show'); }
+}
+
+function handlePay(){
+  const c=document.getElementById('currency').value;
+  const a=parseFloat(document.getElementById('amount').value);
+  const fn=document.getElementById('fname').value.trim();
+  const ln=document.getElementById('lname').value.trim();
+  const em=document.getElementById('email').value.trim();
+  const d=document.getElementById('desc').value.trim();
+  if(!c){alert('Please select your currency.');return;}
+  if(!a||a<=0){alert('Please enter a valid amount.');return;}
+  if(!fn||!ln){alert('Please enter your full name.');return;}
+  if(!em||!em.includes('@')){alert('Please enter a valid email address.');return;}
+  const note=encodeURIComponent('KĀLET | '+(d||'Product Payment')+' | '+fn+' '+ln+' | '+em);
+  window.open(`https://wise.com/pay/@jawada441?amount=${a}&sourceCurrency=${c}&note=${note}`,'_blank');
+}
+</script>
+</body>
+</html>
